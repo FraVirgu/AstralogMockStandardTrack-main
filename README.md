@@ -131,3 +131,5 @@ By completing this project, you will master:
 - This is a **mock environment**: no real telemetry analysis implementation is required.
 - The focus is entirely on **infrastructure, portability, and automation**.
 - Ensure your solution is **clean, reproducible, and well-documented**.
+
+prova push
