@@ -33,6 +33,7 @@ jobs:
 
       - name: Setup SSH credentials
         run: |
+          ssh-keygen -y -f ~/.ssh/cineca_key
           mkdir -p ~/.ssh
           printf '%s\n' "${{ secrets.HPC_SSH_KEY }}" > ~/.ssh/cineca_key
           chmod 600 ~/.ssh/cineca_key
