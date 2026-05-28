@@ -31,6 +31,14 @@ jobs:
         run: |
           python3 -m pytest -v
 
+      
+          
+
+      - name: Setup SSH credentials
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.HPC_SSH_KEY }}" > ~/.ssh/cineca_key
+          chmod 600 ~/.ssh/cineca_key
       - name: Debug variables
         run: |
           echo "HPC_USER=${{ secrets.HPC_USER }}"
@@ -41,14 +49,6 @@ jobs:
 
           echo "=== Public key derived from private key ==="
           ssh-keygen -y -f ~/.ssh/cineca_key
-
-          
-
-      - name: Setup SSH credentials
-        run: |
-          mkdir -p ~/.ssh
-          printf '%s\n' "${{ secrets.HPC_SSH_KEY }}" > ~/.ssh/cineca_key
-          chmod 600 ~/.ssh/cineca_key
 
       - name: Debug SSH public key
         run: |
