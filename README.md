@@ -136,13 +136,20 @@ By completing this project, you will master:
 # dentro la repository
 docker login
 
+docker buildx build --no-cache --platform linux/amd64 \
+  -t mcolombo2002/astralog:latest \
+  --push . 
+
+
 # GALILEO / HPC
 cd prova
 
 rm -f astralog_latest.sif
 singularity cache clean --force
+ docker buildx build --no-cache --platform linux/amd64 \
+  -t mcolombo2002/astralog:latest \
+  --push . 
 
-singularity pull --disable-cache docker://mcolombo2002/astralog:latest
 
 singularity exec --cleanenv astralog_latest.sif ls /usr/src/app
 
@@ -157,3 +164,52 @@ python3 -m src.astralog_mock \
   --input input/telemetry_cleaned.csv \
   --output /output
 '
+
+## GitHub Actions Secrets Configuration
+
+To enable automatic deployment and execution on the Galileo100 HPC cluster, configure the following GitHub Actions secrets:
+
+Go to:
+
+```text
+GitHub Repository → Settings → Secrets and variables → Actions
+```
+
+and create the following repository secrets:
+
+| Secret name      | Description                                           |
+| ---------------- | ----------------------------------------------------- |
+| `HPC_USER`       | HPC username (e.g. `mcolombo`)                        |
+| `HPC_HOST`       | Galileo100 login node hostname                        |
+| `HPC_PORT`       | SSH port used for HPC access                          |
+| `HPC_SSH_KEY`    | Private SSH key used for passwordless authentication  |
+| `HPC_REMOTE_DIR` | Remote working directory on Galileo100                |
+
+### Example
+
+```text
+HPC_USER=mcolombo
+HPC_HOST=login.g100.cineca.it
+HPC_PORT=22
+HPC_REMOTE_DIR=/g100/home/userexternal/mcolombo/prova
+```
+
+### Notes
+
+* The SSH private key must be pasted entirely, including:
+
+```text
+-----BEGIN OPENSSH PRIVATE KEY-----
+...
+-----END OPENSSH PRIVATE KEY-----
+```
+
+* The workflow automatically:
+
+  * connects to Galileo100 via SSH
+  * pulls the Docker image from Docker Hub as a Singularity container
+  * executes the containerized workflow on the HPC cluster
+  * stores generated results in the remote output directory
+
+```
+```
