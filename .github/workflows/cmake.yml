@@ -45,7 +45,18 @@ jobs:
           ssh ${{ env.SSH_OPTS }} \
               ${{ secrets.HPC_USER }}@${{ secrets.HPC_HOST }} \
               "mkdir -p ${{ env.REMOTE_RUN_DIR }}/results"
+      - name: Debug variables
+        run: |
+          echo "HPC_USER=${{ secrets.HPC_USER }}"
+          echo "HPC_HOST=${{ secrets.HPC_HOST }}"
+          echo "HPC_PORT=${{ secrets.HPC_PORT }}"
+          echo "HPC_REMOTE_DIR=${{ secrets.HPC_REMOTE_DIR }}"
+          echo "SSH_OPTS=${{ env.SSH_OPTS }}"
 
+          echo "=== Public key derived from private key ==="
+          ssh-keygen -y -f ~/.ssh/cineca_key
+
+          
       - name: Pull and run Singularity container on Galileo100
         run: |
           ssh ${{ env.SSH_OPTS }} \
