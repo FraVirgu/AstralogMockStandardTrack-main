@@ -33,11 +33,13 @@ jobs:
 
       - name: Setup SSH credentials
         run: |
-          ssh-keygen -y -f ~/.ssh/cineca_key
           mkdir -p ~/.ssh
           printf '%s\n' "${{ secrets.HPC_SSH_KEY }}" > ~/.ssh/cineca_key
           chmod 600 ~/.ssh/cineca_key
 
+    - name: Debug SSH public key
+        run: |
+          ssh-keygen -y -f ~/.ssh/cineca_key
       - name: Prepare remote directory
         run: |
           ssh ${{ env.SSH_OPTS }} \
