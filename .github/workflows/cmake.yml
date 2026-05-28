@@ -50,6 +50,15 @@ jobs:
           echo "=== Public key derived from private key ==="
           ssh-keygen -y -f ~/.ssh/cineca_key
 
+      - name: Test SSH manually
+        run: |
+          ssh -vvv -i ~/.ssh/cineca_key \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -p 22 \
+            mcolombo@login.g100.cineca.it \
+            "echo CONNECTED"
+
       - name: Debug SSH public key
         run: |
           ssh-keygen -y -f ~/.ssh/cineca_key
