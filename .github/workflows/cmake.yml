@@ -38,8 +38,8 @@ jobs:
           chmod 600 ~/.ssh/cineca_key
 
       - name: Debug SSH public key
-          run: |
-            ssh-keygen -y -f ~/.ssh/cineca_key
+        run: |
+          ssh-keygen -y -f ~/.ssh/cineca_key
       - name: Prepare remote directory
         run: |
           ssh ${{ env.SSH_OPTS }} \
