@@ -1,40 +1,66 @@
-name: CMake on a single platform
+name: AstraLog CI/CD Pipeline
 
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-env:
-  BUILD_TYPE: Release
+    branches:
+      - main
 
 jobs:
-  build:
+  build-test-deploy:
     runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
+    env:
+      REMOTE_RUN_DIR: ${{ secrets.HPC_REMOTE_DIR }}/run-${{ github.sha }}
+      SSH_OPTS: "-i ~/.ssh/cineca_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p ${{ secrets.HPC_PORT }}"
 
-      # Provide Python to the VM
-      - name: Set up Python
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.10'
 
-      # Generate the build system (reads CMakeLists.txt)
-      - name: Configure CMake
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
-
-      # Runs: pip install -r requirements.txt
       - name: Install dependencies
-        run: cmake --build ${{github.workspace}}/build --target install_deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      # Runs: python3 -m src.astralog_mock --rules ... --input ... --output ...
-      - name: Run astralog_mock
-        run: cmake --build ${{github.workspace}}/build --target run
+      - name: Run tests with pytest
+        run: |
+          python3 -m pytest -v
 
-      # Runs: python3 -m pytest -v  (via ctest)
-      - name: Test
-        working-directory: ${{github.workspace}}/build
-        run: ctest -C ${{env.BUILD_TYPE}} --output-on-failure
+      - name: Setup SSH credentials
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.HPC_SSH_KEY }}" > ~/.ssh/cineca_key
+          echo "${{ secrets.HPC_CERT }}" > ~/.ssh/cineca_key-cert.pub
+          chmod 600 ~/.ssh/cineca_key
+          chmod 644 ~/.ssh/cineca_key-cert.pub
+
+      - name: Prepare remote directory
+        run: |
+          ssh ${{ env.SSH_OPTS }} \
+              ${{ secrets.HPC_USER }}@${{ secrets.HPC_HOST }} \
+              "mkdir -p ${{ env.REMOTE_RUN_DIR }}/results"
+
+      - name: Pull and run Singularity container on Galileo100
+        run: |
+          ssh ${{ env.SSH_OPTS }} \
+              ${{ secrets.HPC_USER }}@${{ secrets.HPC_HOST }} \
+              "cd ${{ env.REMOTE_RUN_DIR }} && \
+               rm -f astralog_latest.sif && \
+               singularity cache clean --force && \
+               singularity pull --disable-cache docker://mcolombo2002/astralog:latest && \
+               singularity exec --cleanenv astralog_latest.sif ls /usr/src/app && \
+               mkdir -p results && \
+               singularity exec --cleanenv \
+                 --bind \${PWD}/results:/output \
+                 astralog_latest.sif bash -lc '
+                   cd /usr/src/app &&
+                   python3 -m src.astralog_mock \
+                     --rules input/rules.json \
+                     --input input/telemetry_cleaned.csv \
+                     --output /output
+                 '"
