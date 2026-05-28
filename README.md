@@ -132,5 +132,28 @@ By completing this project, you will master:
 - The focus is entirely on **infrastructure, portability, and automation**.
 - Ensure your solution is **clean, reproducible, and well-documented**.
 
-prova push
-prova push Marta
+## running Docker after pulling
+# dentro la repository
+docker login
+
+# GALILEO / HPC
+cd prova
+
+rm -f astralog_latest.sif
+singularity cache clean --force
+
+singularity pull --disable-cache docker://mcolombo2002/astralog:latest
+
+singularity exec --cleanenv astralog_latest.sif ls /usr/src/app
+
+mkdir -p results
+
+singularity exec --cleanenv \
+  --bind $PWD/results:/output \
+  astralog_latest.sif bash -lc '
+cd /usr/src/app &&
+python3 -m src.astralog_mock \
+  --rules input/rules.json \
+  --input input/telemetry_cleaned.csv \
+  --output /output
+'
