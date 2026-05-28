@@ -34,10 +34,8 @@ jobs:
       - name: Setup SSH credentials
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.HPC_SSH_KEY }}" > ~/.ssh/cineca_key
-          echo "${{ secrets.HPC_CERT }}" > ~/.ssh/cineca_key-cert.pub
+          printf '%s\n' "${{ secrets.HPC_SSH_KEY }}" > ~/.ssh/cineca_key
           chmod 600 ~/.ssh/cineca_key
-          chmod 644 ~/.ssh/cineca_key-cert.pub
 
       - name: Prepare remote directory
         run: |
