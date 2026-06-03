@@ -133,36 +133,37 @@ By completing this project, you will master:
 - Ensure your solution is **clean, reproducible, and well-documented**.
 
 ## running Docker after pulling
+
 # dentro la repository
+
 docker login
 
 docker buildx build --no-cache --platform linux/amd64 \
-  -t mcolombo2002/astralog:latest \
-  --push . 
-
+ -t mcolombo2002/astralog:latest \
+ --push .
 
 # GALILEO / HPC
+
 cd prova
 
 rm -f astralog_latest.sif
 singularity cache clean --force
- docker buildx build --no-cache --platform linux/amd64 \
-  -t mcolombo2002/astralog:latest \
-  --push . 
-
+docker buildx build --no-cache --platform linux/amd64 \
+ -t mcolombo2002/astralog:latest \
+ --push .
 
 singularity exec --cleanenv astralog_latest.sif ls /usr/src/app
 
 mkdir -p results
 
 singularity exec --cleanenv \
-  --bind $PWD/results:/output \
-  astralog_latest.sif bash -lc '
+ --bind $PWD/results:/output \
+ astralog_latest.sif bash -lc '
 cd /usr/src/app &&
 python3 -m src.astralog_mock \
-  --rules input/rules.json \
-  --input input/telemetry_cleaned.csv \
-  --output /output
+ --rules input/rules.json \
+ --input input/telemetry_cleaned.csv \
+ --output /output
 '
 
 ## GitHub Actions Secrets Configuration
@@ -177,13 +178,13 @@ GitHub Repository → Settings → Secrets and variables → Actions
 
 and create the following repository secrets:
 
-| Secret name      | Description                                           |
-| ---------------- | ----------------------------------------------------- |
-| `HPC_USER`       | HPC username (e.g. `mcolombo`)                        |
-| `HPC_HOST`       | Galileo100 login node hostname                        |
-| `HPC_PORT`       | SSH port used for HPC access                          |
-| `HPC_SSH_KEY`    | Private SSH key used for passwordless authentication  |
-| `HPC_REMOTE_DIR` | Remote working directory on Galileo100                |
+| Secret name      | Description                                          |
+| ---------------- | ---------------------------------------------------- |
+| `HPC_USER`       | HPC username (e.g. `mcolombo`)                       |
+| `HPC_HOST`       | Galileo100 login node hostname                       |
+| `HPC_PORT`       | SSH port used for HPC access                         |
+| `HPC_SSH_KEY`    | Private SSH key used for passwordless authentication |
+| `HPC_REMOTE_DIR` | Remote working directory on Galileo100               |
 
 ### Example
 
@@ -196,7 +197,7 @@ HPC_REMOTE_DIR=/g100/home/userexternal/mcolombo/prova
 
 ### Notes
 
-* The SSH private key must be pasted entirely, including:
+- The SSH private key must be pasted entirely, including:
 
 ```text
 -----BEGIN OPENSSH PRIVATE KEY-----
@@ -204,16 +205,71 @@ HPC_REMOTE_DIR=/g100/home/userexternal/mcolombo/prova
 -----END OPENSSH PRIVATE KEY-----
 ```
 
-* The workflow automatically:
-
-  * connects to Galileo100 via SSH
-  * pulls the Docker image from Docker Hub as a Singularity container
-  * executes the containerized workflow on the HPC cluster
-  * stores generated results in the remote output directory
+- The workflow automatically:
+  - connects to Galileo100 via SSH
+  - pulls the Docker image from Docker Hub as a Singularity container
+  - executes the containerized workflow on the HPC cluster
+  - stores generated results in the remote output directory
 
 ```
+
 ```
-
-
 
 asdasdasasasa
+
+Looking at your pipeline, you need to set up several **GitHub Actions Secrets**. Here's a breakdown of each one and how to add them.
+
+---
+
+## Secrets your pipeline needs
+
+| Secret name      | What it is                                                    | Example value                                                             |
+| ---------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `HPC_SSH_KEY`    | The **private key** content used to SSH into Galileo100       | Contents of `~/.ssh/cineca_key` (the whole file, `-----BEGIN...END-----`) |
+| `HPC_HOST`       | The hostname of the HPC login node                            | `login.g100.cineca.it`                                                    |
+| `HPC_USER`       | Your CINECA username                                          | `fvirgult`                                                                |
+| `HPC_PORT`       | The SSH port (usually 22, unless CINECA uses a custom one)    | `22`                                                                      |
+| `HPC_REMOTE_DIR` | Base path on the remote where run directories will be created | `/g100/home/userexternal/fvirgult`                                        |
+
+---
+
+## How to generate the SSH key pair
+
+Since CINECA now uses OIDC/step-ca for interactive logins, you'll want a **dedicated key pair** specifically for CI/CD (non-interactive):
+
+```bash
+ssh-keygen -t ed25519 -C "github-actions-astralog" -f ~/.ssh/cineca_ci_key -N ""
+```
+
+Then add the public key to your CINECA account:
+
+```bash
+cat ~/.ssh/cineca_ci_key.pub
+```
+
+Paste it into your [CINECA user portal](https://userdb.hpc.cineca.it) under SSH keys.
+
+The **private key** (`cineca_ci_key`) is what goes into `HPC_SSH_KEY`.
+
+---
+
+## How to add secrets to GitHub
+
+1. Go to your repo on GitHub
+2. **Settings → Secrets and variables → Actions**
+3. Click **"New repository secret"**
+4. Add each secret by name and value
+
+For `HPC_SSH_KEY`, paste the **entire private key file content**, including the header/footer lines:
+
+```
+-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXkt...
+-----END OPENSSH PRIVATE KEY-----
+```
+
+---
+
+## One thing to watch in your pipeline
+
+Your `SSH_OPTS` uses `-o StrictHostKeyChecking=no` which bypasses host verification — acceptable for CI, but just be aware it means the pipeline won't catch if the remote host changes (unlike what you just experienced locally). You could instead add the known host fingerprint as another secret and use `ssh-keyscan` in the setup step for a more hardened approach.
