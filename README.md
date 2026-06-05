@@ -138,9 +138,9 @@ By completing this project, you will master:
 
 docker login
 
-docker buildx build --no-cache --platform linux/amd64 \
- -t mcolombo2002/astralog:latest \
- --push .
+docker buildx build --no-cache --platform linux/amd64
+-t mcolombo2002/astralog:latest
+--push .
 
 # GALILEO / HPC
 
@@ -148,22 +148,22 @@ cd prova
 
 rm -f astralog_latest.sif
 singularity cache clean --force
-docker buildx build --no-cache --platform linux/amd64 \
- -t mcolombo2002/astralog:latest \
- --push .
+docker buildx build --no-cache --platform linux/amd64
+-t mcolombo2002/astralog:latest
+--push .
 
 singularity exec --cleanenv astralog_latest.sif ls /usr/src/app
 
 mkdir -p results
 
-singularity exec --cleanenv \
- --bind $PWD/results:/output \
- astralog_latest.sif bash -lc '
+singularity exec --cleanenv
+--bind $PWD/results:/output
+astralog_latest.sif bash -lc '
 cd /usr/src/app &&
-python3 -m src.astralog_mock \
- --rules input/rules.json \
- --input input/telemetry_cleaned.csv \
- --output /output
+python3 -m src.astralog_mock
+--rules input/rules.json
+--input input/telemetry_cleaned.csv
+--output /output
 '
 
 ## GitHub Actions Secrets Configuration
@@ -180,7 +180,7 @@ and create the following repository secrets:
 
 | Secret name      | Description                                          |
 | ---------------- | ---------------------------------------------------- |
-| `HPC_USER`       | HPC username (e.g. `mcolombo`)                       |
+| `HPC_USER`       | HPC username (e.g.`mcolombo`)                        |
 | `HPC_HOST`       | Galileo100 login node hostname                       |
 | `HPC_PORT`       | SSH port used for HPC access                         |
 | `HPC_SSH_KEY`    | Private SSH key used for passwordless authentication |
@@ -225,7 +225,7 @@ Looking at your pipeline, you need to set up several **GitHub Actions Secrets**.
 
 | Secret name      | What it is                                                    | Example value                                                             |
 | ---------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `HPC_SSH_KEY`    | The **private key** content used to SSH into Galileo100       | Contents of `~/.ssh/cineca_key` (the whole file, `-----BEGIN...END-----`) |
+| `HPC_SSH_KEY`    | The**private key** content used to SSH into Galileo100        | Contents of `~/.ssh/cineca_key` (the whole file, `-----BEGIN...END-----`) |
 | `HPC_HOST`       | The hostname of the HPC login node                            | `login.g100.cineca.it`                                                    |
 | `HPC_USER`       | Your CINECA username                                          | `fvirgult`                                                                |
 | `HPC_PORT`       | The SSH port (usually 22, unless CINECA uses a custom one)    | `22`                                                                      |
@@ -272,4 +272,4 @@ b3BlbnNzaC1rZXkt...
 
 ## One thing to watch in your pipeline
 
-Your `SSH_OPTS` uses `-o StrictHostKeyChecking=no` which bypasses host verification — acceptable for CI, but just be aware it means the pipeline won't catch if the remote host changes (unlike what you just experienced locally). You could instead add the known host fingerprint as another secret and use `ssh-keyscan` in the setup step for a more hardened approach.
+Your `SSH_OPTS` uses `-o StrictHostKeyChecking=no` which bypasses host verification — acceptable for CI, but just be aware it means the pipeline won't catch if the remote host changes (unlike what you just experienced locally). You could instead add the known host fingerprint as another secret and use `ssh-keyscan` in the setup step for a more hardened approach.,sadas
